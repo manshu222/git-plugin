@@ -47,7 +47,9 @@ You need to set up the following options to use the plugin:
     * `ftp[s]://host.xz[:port]/path/to/repo.git/`
     * `rsync://host.xz/path/to/repo.git/`
 
-* **Branch**: Checkout branch
+* **Reference Type**: Choose whether to checkout a `branch` or `tag` (defaults to `branch`)
+* **Branch**: Checkout branch (required when Reference Type is `branch`)
+* **Tag**: Checkout tag (required when Reference Type is `tag`)
 * **Resource model File**: Resource model file inside the github repo. This is the file that will be added to Rundeck resource model.
 * **File Format**:  File format of the resource model, it could be xml, yaml, json
 * **Writable**: Allow to write the remote file
@@ -221,7 +223,9 @@ You need to set up following additional options to use the plugin:
 
 ##### Repo Settings
 
-* **Branch**: Checkout branch
+* **Reference Type**: Choose whether to checkout a `branch` or `tag` (defaults to `branch`)
+* **Branch**: Checkout branch (optional, used when Reference Type is `branch`, defaults to `master`)
+* **Tag**: Checkout tag (optional, used when Reference Type is `tag`)
 
 
 ### GIT Push Workflow Step
@@ -292,33 +296,72 @@ You need to set up following additional options to use the plugin:
 
 ### Common Configuration Scenarios
 
-#### Scenario 1: Public GitHub Repo (Read-Only)
+#### Scenario 1: Public GitHub Repo - Checkout Branch (Read-Only)
 ```
 Git URL: https://github.com/user/repo.git
+Reference Type: branch
 Branch: main
 Authentication: None required
 ```
 
-#### Scenario 2: Private GitHub Repo with Personal Access Token
+#### Scenario 1b: Public GitHub Repo - Checkout Tag (Read-Only)
 ```
 Git URL: https://github.com/user/repo.git
+Reference Type: tag
+Tag: v1.2.0
+Authentication: None required
+```
+
+#### Scenario 2: Private GitHub Repo with Personal Access Token - Branch
+```
+Git URL: https://github.com/user/repo.git
+Reference Type: branch
 Branch: main
 Authentication: Git Password Storage Path → keys/git/github-token
 (Store GitHub PAT in Key Storage as password)
 ```
 
-#### Scenario 3: Private GitLab Repo with SSH Key
+#### Scenario 2b: Private GitHub Repo with Personal Access Token - Tag
+```
+Git URL: https://github.com/user/repo.git
+Reference Type: tag
+Tag: v2.0.0
+Authentication: Git Password Storage Path → keys/git/github-token
+(Store GitHub PAT in Key Storage as password)
+```
+
+#### Scenario 3: Private GitLab Repo with SSH Key - Branch
 ```
 Git URL: git@gitlab.com:user/repo.git
+Reference Type: branch
 Branch: main
 Authentication: SSH Key Storage Path → keys/git/gitlab-ssh-key
 Strict Host Key Checking: yes
 ```
 
-#### Scenario 4: Private Repo with HTTPS Username/Password
+#### Scenario 3b: Private GitLab Repo with SSH Key - Tag
+```
+Git URL: git@gitlab.com:user/repo.git
+Reference Type: tag
+Tag: release-1.0
+Authentication: SSH Key Storage Path → keys/git/gitlab-ssh-key
+Strict Host Key Checking: yes
+```
+
+#### Scenario 4: Private Repo with HTTPS Username/Password - Branch
 ```
 Git URL: https://username@github.com/user/repo.git
+Reference Type: branch
 Branch: main
+Authentication: Git Password Storage Path → keys/git/password
+(Include username in URL)
+```
+
+#### Scenario 4b: Private Repo with HTTPS Username/Password - Tag
+```
+Git URL: https://username@github.com/user/repo.git
+Reference Type: tag
+Tag: stable-v1.5.0
 Authentication: Git Password Storage Path → keys/git/password
 (Include username in URL)
 ```
@@ -329,7 +372,9 @@ Authentication: Git Password Storage Path → keys/git/password
 |--------------|-------------|---------------|
 | `gitUrl` | Git repository URL | `https://github.com/user/repo.git` |
 | `gitBaseDirectory` | Local checkout directory | `/var/rundeck/git-repos/project1` |
+| `gitRefType` | Reference type: branch or tag | `branch` or `tag` |
 | `gitBranch` | Branch to checkout | `main` or `develop` |
+| `gitTag` | Tag to checkout | `v1.0.0` or `release-1.2` |
 | `gitFile` | Resource model file in repo | `resources.yaml` |
 | `gitFormatFile` | File format | `xml`, `yaml`, or `json` |
 | `gitPasswordPath` | Plain text password | `mypassword` (not recommended) |
