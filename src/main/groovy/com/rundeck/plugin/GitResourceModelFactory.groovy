@@ -29,6 +29,7 @@ class GitResourceModelFactory implements ResourceModelSourceFactory,Describable 
 
     public static final List<String> LIST_HOSTKEY_CHECKING =['yes', 'no']
     public static final List<String> LIST_FILE_TYPE =['xml', 'yaml','json']
+    public static final List<String> LIST_REF_TYPE =['branch', 'tag']
 
     public final static String GIT_URL="gitUrl"
     public final static String GIT_BASE_DIRECTORY="gitBaseDirectory"
@@ -36,6 +37,8 @@ class GitResourceModelFactory implements ResourceModelSourceFactory,Describable 
     public final static String GIT_FILE="gitFile"
     public final static String GIT_FORMAT_FILE="gitFormatFile"
     public final static String GIT_BRANCH="gitBranch"
+    public final static String GIT_TAG="gitTag"
+    public final static String GIT_REF_TYPE="gitRefType"
     public final static String GIT_HOSTKEY_CHECKING="strictHostKeyChecking"
     public final static String GIT_KEY_PATH="gitKeyPath"
     public final static String GIT_KEY_STORAGE_PATH="gitKeyPathStorage"
@@ -71,8 +74,12 @@ Some examples:
 * `ftp[s]://host.xz[:port]/path/to/repo.git/`
 * `rsync://host.xz/path/to/repo.git/`''', true,
             null,null,null, renderingOptionsConfig))
-            .property(PropertyUtil.string(GIT_BRANCH, "Branch", "Checkout branch.", true,
+            .property(PropertyUtil.select(GIT_REF_TYPE, "Reference Type", "Choose whether to checkout a branch or tag.", true,
+            "branch", LIST_REF_TYPE, null, renderingOptionsConfig))
+            .property(PropertyUtil.string(GIT_BRANCH, "Branch", "Checkout branch.", false,
             "master",null,null, renderingOptionsConfig))
+            .property(PropertyUtil.string(GIT_TAG, "Tag", "Checkout tag.", false,
+            null,null,null, renderingOptionsConfig))
             .property(PropertyUtil.bool(GIT_LOG_DISABLE, "Disable log output", "Enabling this flag, the plugin will not show the output log", true,
             "false",null, renderingOptionsConfig))
             .property(PropertyUtil.string(GIT_FILE, "Resource model File", "Resource model file inside the github repo.", true,

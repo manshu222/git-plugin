@@ -72,6 +72,8 @@ class GitManager {
 
     Git git
     String branch
+    String tag
+    String refType
     String fileName
     Repository repo
     String strictHostKeyChecking
@@ -83,9 +85,18 @@ class GitManager {
     GitManager(Properties configuration) {
         this.gitURL = configuration.getProperty(GitResourceModelFactory.GIT_URL)
         this.branch = configuration.getProperty(GitResourceModelFactory.GIT_BRANCH)
+        this.tag = configuration.getProperty(GitResourceModelFactory.GIT_TAG)
+        this.refType = configuration.getProperty(GitResourceModelFactory.GIT_REF_TYPE) ?: "branch"
         this.fileName = configuration.getProperty(GitResourceModelFactory.GIT_FILE)
         this.strictHostKeyChecking = configuration.getProperty(GitResourceModelFactory.GIT_HOSTKEY_CHECKING)
 
+    }
+
+    /**
+     * Get the current reference (branch or tag) to checkout
+     */
+    String getRef() {
+        return refType == "tag" ? tag : branch
     }
 
     Map<String, String> getSshConfig() {
@@ -169,7 +180,7 @@ class GitManager {
     private void performClone(File base) {
 
         def cloneCommand = Git.cloneRepository().
-                setBranch(this.branch).
+                setBranch(getRef()).
                 setRemote(REMOTE_NAME).
                 setDirectory(base).
                 setURI(this.gitURL).
@@ -293,7 +304,7 @@ class GitManager {
     }
 
     PullResult gitPull(Git git1 = null) {
-        def pullCommand = (git1 ?: git).pull().setRemote(REMOTE_NAME).setRemoteBranchName(branch)
+        def pullCommand = (git1 ?: git).pull().setRemote(REMOTE_NAME).setRemoteBranchName(getRef())
         setupTransportAuthentication(sshConfig, pullCommand)
         withPluginClassLoader { pullCommand.call() }
     }
@@ -316,7 +327,7 @@ class GitManager {
         /// PERFORM PUSH
         def pushb = git.push()
         pushb.setRemote(REMOTE_NAME)
-        pushb.add(branch)
+        pushb.add(getRef())
         setupTransportAuthentication(sshConfig, pushb)
 
         def push
@@ -366,5 +377,109 @@ class GitManager {
 
     }
 
+    /**
+     * Create a tag on the current HEAD
+     */
+    def createTag(File base, String tagName, String message = null) {
+        withPluginClassLoader {
+            def arepo = new FileRepositoryBuilder().setGitDir(new File(base, ".git")).setWorkTree(base).build()
+            def agit = new Git(arepo)
+
+            def tagCommand = agit.tag()
+                    .setName(tagName)
+                    .setAnnotated(true)
+
+            if (message) {
+                tagCommand.setMessage(message)
+            }
+
+            try {
+                def ref = tagCommand.call()
+                logger.info("Created tag: ${tagName}")
+                return ref
+            } catch (Exception e) {
+                logger.error("Failed to create tag ${tagName}: ${e.message}", e)
+                throw e
+            } finally {
+                agit.close()
+            }
+        }
+    }
+
+    /**
+     * Push tags to remote
+     */
+    def pushTags(File base) {
+        withPluginClassLoader {
+            def arepo = new FileRepositoryBuilder().setGitDir(new File(base, ".git")).setWorkTree(base).build()
+            def agit = new Git(arepo)
+
+            def pushCommand = agit.push()
+                    .setPushTags()
+                    .setRemote(REMOTE_NAME)
+
+            setupTransportAuthentication(getSshConfig(), pushCommand)
+
+            try {
+                def pushResult = pushCommand.call()
+                logger.info("Pushed tags to remote")
+                return pushResult
+            } catch (Exception e) {
+                logger.error("Failed to push tags: ${e.message}", e)
+                throw e
+            } finally {
+                agit.close()
+            }
+        }
+    }
+
+    /**
+     * Delete a local tag
+     */
+    def deleteTag(File base, String tagName) {
+        withPluginClassLoader {
+            def arepo = new FileRepositoryBuilder().setGitDir(new File(base, ".git")).setWorkTree(base).build()
+            def agit = new Git(arepo)
+
+            try {
+                agit.tagDelete()
+                        .setTags(tagName)
+                        .call()
+                logger.info("Deleted local tag: ${tagName}")
+            } catch (Exception e) {
+                logger.error("Failed to delete local tag ${tagName}: ${e.message}", e)
+                throw e
+            } finally {
+                agit.close()
+            }
+        }
+    }
+
+    /**
+     * Delete a remote tag
+     */
+    def deleteRemoteTag(File base, String tagName) {
+        withPluginClassLoader {
+            def arepo = new FileRepositoryBuilder().setGitDir(new File(base, ".git")).setWorkTree(base).build()
+            def agit = new Git(arepo)
+
+            def pushCommand = agit.push()
+                    .setRemote(REMOTE_NAME)
+                    .delete(tagName)
+
+            setupTransportAuthentication(getSshConfig(), pushCommand)
+
+            try {
+                def pushResult = pushCommand.call()
+                logger.info("Deleted remote tag: ${tagName}")
+                return pushResult
+            } catch (Exception e) {
+                logger.error("Failed to delete remote tag ${tagName}: ${e.message}", e)
+                throw e
+            } finally {
+                agit.close()
+            }
+        }
+    }
 
 }

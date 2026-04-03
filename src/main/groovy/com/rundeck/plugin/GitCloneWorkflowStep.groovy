@@ -30,10 +30,14 @@ class GitCloneWorkflowStep implements StepPlugin, Describable{
     public final static String GIT_BASE_DIRECTORY="gitBaseDirectory"
     public final static String GIT_LOG_DISABLE ="gitLogDisable"
     public final static String GIT_BRANCH="gitBranch"
+    public final static String GIT_TAG="gitTag"
+    public final static String GIT_REF_TYPE="gitRefType"
     public final static String GIT_HOSTKEY_CHECKING="strictHostKeyChecking"
     public final static String GIT_KEY_STORAGE="gitKeyPath"
     public final static String GIT_PASSWORD_STORAGE="gitPasswordPath"
     public final static String GIT_PROJECT_BASED_SUBDIRECTORY="gitUseProjectBasedSubdirectory"
+
+    public final static List<String> LIST_REF_TYPE =['branch', 'tag']
 
 
     final static Map<String, Object> renderingOptionsAuthentication = GitPluginUtil.getRenderOpt("Authentication", false)
@@ -61,8 +65,12 @@ Some examples:
 * `ftp[s]://host.xz[:port]/path/to/repo.git/`
 * `rsync://host.xz/path/to/repo.git/`''', true,
                                                                                      null,null,null, renderingOptionsConfig))
-                                                       .property(PropertyUtil.string(GIT_BRANCH, "Branch", "Checkout branch.", true,
+                                                       .property(PropertyUtil.select(GIT_REF_TYPE, "Reference Type", "Choose whether to checkout a branch or tag.", true,
+                                                                                     "branch", LIST_REF_TYPE, null, renderingOptionsConfig))
+                                                       .property(PropertyUtil.string(GIT_BRANCH, "Branch", "Checkout branch.", false,
                                                                                      "master",null,null, renderingOptionsConfig))
+                                                       .property(PropertyUtil.string(GIT_TAG, "Tag", "Checkout tag.", false,
+                                                                                     null,null,null, renderingOptionsConfig))
                                                        .property(PropertyUtil.bool(GIT_LOG_DISABLE, "Disable log output", "Enabling this flag, the plugin will not show the output log", true,
                                                                                      "false",null, renderingOptionsConfig))
                                                        .property(PropertyUtil.string(GIT_PASSWORD_STORAGE, "Git Password", 'Password to authenticate remotely', false,
